@@ -19,10 +19,12 @@ namespace TBStock.DAL
             modelBuilder.HasDefaultSchema("walid");
 
             Product.SetEntityConfiguration(modelBuilder);
+            ProductDetail.SetEntityConfiguration(modelBuilder);
             base.OnModelCreating(modelBuilder);
         }
 
         public DbSet<Product> Products { get; set; }
+        public DbSet<ProductDetail> ProductDetails { get; set; }
 
     }
 }
