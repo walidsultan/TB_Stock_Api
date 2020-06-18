@@ -13,6 +13,9 @@ namespace TB_Stock.DAL.Models
         public string ImagePath { get; set; }
         public DateTime CreatedDate { get; set; }
         public double Price { get; set; }
+        public string Size { get; set; }
+        public string InstagramRefId { get; set; }
+        public string InstagramContentUrl { get; set; }
 
 
         public static void SetEntityConfiguration(DbModelBuilder modelBuilder)
@@ -62,6 +65,21 @@ namespace TB_Stock.DAL.Models
                .Property(t => t.Price)
                .HasColumnName("Price")
                .HasColumnType("float");
+
+            profileConfig
+               .Property(t => t.Size)
+               .HasColumnName("Size")
+               .HasColumnType("nvarchar");
+
+            profileConfig
+               .Property(t => t.InstagramRefId)
+               .HasColumnName("InstagramRefId")
+               .HasColumnType("nvarchar");
+
+            profileConfig
+               .Property(t => t.InstagramContentUrl)
+               .HasColumnName("InstagramContentUrl")
+               .HasColumnType("nvarchar");
 
             #endregion
 

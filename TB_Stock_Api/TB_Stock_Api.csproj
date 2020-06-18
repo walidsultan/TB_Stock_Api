@@ -113,8 +113,12 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApiHandler\IInstagramGraphApi.cs" />
+    <Compile Include="ApiHandler\InstagramGraphApi.cs" />
     <Compile Include="App_Start\WebApiConfig.cs" />
+    <Compile Include="Controllers\InstagramSyncController.cs" />
     <Compile Include="Controllers\ProductsController.cs" />
+    <Compile Include="FTP\FTPHandler.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>

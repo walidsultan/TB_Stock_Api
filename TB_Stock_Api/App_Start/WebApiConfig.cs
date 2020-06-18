@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
+using TB_Stock.Api.ApiHandler;
 using TBStock.DAL.Repositories;
 using Unity;
 
@@ -16,6 +17,7 @@ namespace TB_Stock
             // Web API configuration and services
             var container = new UnityContainer();
             container.RegisterType<IProductsRepository, ProductsRepository>();
+            container.RegisterType<IInstagramGraphApi, InstagramGraphApi>();
             config.DependencyResolver = new UnityResolver(container);
 
             // Web API routes
