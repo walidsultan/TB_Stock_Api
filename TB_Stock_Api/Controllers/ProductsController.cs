@@ -21,10 +21,10 @@ namespace TB_Stock.Api.Controllers
         }
 
         [HttpGet]
-        [Route("Category/{categoryId}")]
-        public IEnumerable<Product> GetByCategoryId(int categoryId)
+        [Route("Department/{departmentId}")]
+        public IEnumerable<Product> GetByDepartmentId(int departmentId)
         {
-            return _ProductsRepository.GetProductsByCategoryId(categoryId);
+            return _ProductsRepository.GetProductsByDepartmentId(departmentId);
         }
 
 

@@ -9,11 +9,11 @@ namespace TBStock.DAL.Repositories
     public class ProductsRepository : IProductsRepository
     {
 
-        public IEnumerable<Product> GetProductsByCategoryId(int categoryId)
+        public IEnumerable<Product> GetProductsByDepartmentId(int departmentId)
         {
             using (var context = new TBStockDBContext())
             {
-                return context.Products.Where(x => x.CategoryId == categoryId).ToList();
+                return context.Products.Where(x => x.DepartmentId == departmentId).ToList();
             }
         }
 

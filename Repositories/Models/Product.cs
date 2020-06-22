@@ -7,13 +7,18 @@ namespace TB_Stock.DAL.Models
     public class Product
     {
         public int Id { get; set; }
-        public int CategoryId { get; set; }
+        public int DepartmentId { get; set; }
+        public string Category { get; set; }
         public string Name { get; set; }
         public string Code { get; set; }
+        public string Color { get; set; }
         public string ImagePath { get; set; }
         public DateTime CreatedDate { get; set; }
         public double Price { get; set; }
         public string Size { get; set; }
+        public string Type { get; set; }
+        public string Material { get; set; }
+        public int Quantity { get; set; }
         public string InstagramRefId { get; set; }
         public string InstagramContentUrl { get; set; }
 
@@ -33,9 +38,14 @@ namespace TB_Stock.DAL.Models
                     .HasColumnType("int");
 
             profileConfig
-                .Property(t => t.CategoryId)
-                .HasColumnName("CategoryId")
-                .HasColumnType("int");
+              .Property(t => t.DepartmentId)
+              .HasColumnName("DepartmentId")
+              .HasColumnType("int");
+
+            profileConfig
+                .Property(t => t.Category)
+                .HasColumnName("Category")
+                .HasColumnType("nvarchar");
 
             profileConfig
                .Property(t => t.Name)
@@ -46,6 +56,12 @@ namespace TB_Stock.DAL.Models
             profileConfig
                .Property(t => t.Code)
                .HasColumnName("Code")
+               .HasColumnType("nvarchar");
+
+
+            profileConfig
+               .Property(t => t.Color)
+               .HasColumnName("Color")
                .HasColumnType("nvarchar");
 
 
@@ -70,6 +86,21 @@ namespace TB_Stock.DAL.Models
                .Property(t => t.Size)
                .HasColumnName("Size")
                .HasColumnType("nvarchar");
+
+            profileConfig
+               .Property(t => t.Type)
+               .HasColumnName("Type")
+               .HasColumnType("nvarchar");
+
+            profileConfig
+               .Property(t => t.Material)
+               .HasColumnName("Material")
+               .HasColumnType("nvarchar");
+
+            profileConfig
+               .Property(t => t.Quantity)
+               .HasColumnName("Quantity")
+               .HasColumnType("int");
 
             profileConfig
                .Property(t => t.InstagramRefId)

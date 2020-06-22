@@ -41,6 +41,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -50,7 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Models\ProductCategory.cs" />
+    <Compile Include="Models\ProductDepartment.cs" />
     <Compile Include="Models\ProductDetail.cs" />
     <Compile Include="Models\Product.cs" />
     <Compile Include="Repositories\IProductsRepository.cs" />

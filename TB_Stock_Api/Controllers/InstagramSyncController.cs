@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web.Http;
 using System.Web.Http.Cors;
@@ -29,11 +30,18 @@ namespace TB_Stock.Api.Controllers
 
         private IProductsRepository _ProductsRepository;
 
-        private const string PRICE_IDENTIFIER = "price";
         private const string SIZE_IDENTIFIER = "size";
         private const string SIZES_IDENTIFIER = "sizes";
         private const string MEN_IDENTIFIER = "men";
         private const string WOMEN_IDENTIFIER = "ladies";
+        private const string CATEGORY_IDENTIFIER = "category";
+        private const string DEPARTMENT_IDENTIFIER = "department";
+        private const string COLOR_IDENTIFIER = "color";
+        private const string QUANTITY_IDENTIFIER = "qty";
+        private const string PRICE_IDENTIFIER = "price";
+        private const string TYPE_IDENTIFIER = "type";
+        private const string MATERIAL_IDENTIFIER = "material";
+        private const string GENDER_IDENTIFIER = "gender";
 
         public InstagramSyncController(IInstagramGraphApi instagramGraphApi, IProductsRepository productsRepository)
         {
@@ -90,9 +98,9 @@ namespace TB_Stock.Api.Controllers
             FTPHandler.CreateNewDirectory(IMAGES_FOLDER_NAME, ftpUsername, ftpPassword);
 
             //Create Category folders
-            foreach (var categoryId in Enum.GetValues(typeof(ProductCategory)).Cast<int>())
+            foreach (var departmentId in Enum.GetValues(typeof(ProductDepartment)).Cast<int>())
             {
-                FTPHandler.CreateNewDirectory(IMAGES_FOLDER_NAME + "/" + categoryId.ToString(), ftpUsername, ftpPassword);
+                FTPHandler.CreateNewDirectory(IMAGES_FOLDER_NAME + "/" + departmentId.ToString(), ftpUsername, ftpPassword);
             }
 
             //Upload images
@@ -101,13 +109,14 @@ namespace TB_Stock.Api.Controllers
             {
                 foreach (var product in products)
                 {
-                    if (!Directory.Exists(tempDirectory)) {
+                    if (!Directory.Exists(tempDirectory))
+                    {
                         Directory.CreateDirectory(tempDirectory);
                     }
                     string localFilePath = Path.Combine(tempDirectory, product.ImagePath);
                     client.DownloadFile(product.InstagramContentUrl, localFilePath);
 
-                    var productFolderPath = IMAGES_FOLDER_NAME + "/" + product.CategoryId.ToString() + "/" + product.Code;
+                    var productFolderPath = IMAGES_FOLDER_NAME + "/" + product.DepartmentId.ToString() + "/" + product.Code;
                     FTPHandler.CreateNewDirectory(productFolderPath, ftpUsername, ftpPassword);
 
                     string ftpFileName = productFolderPath + "/" + product.ImagePath;
@@ -116,7 +125,7 @@ namespace TB_Stock.Api.Controllers
             }
 
             //Delete temp folder
-            Directory.Delete(tempDirectory,true);
+            Directory.Delete(tempDirectory, true);
         }
 
         private IEnumerable<Product> ConvertInstagramPostToProducts(IEnumerable<InstagramPost> posts)
@@ -125,62 +134,91 @@ namespace TB_Stock.Api.Controllers
 
             foreach (var post in posts)
             {
-                if (string.IsNullOrWhiteSpace(post.Caption))
+                try
                 {
+                    if (string.IsNullOrWhiteSpace(post.Caption))
+                    {
+                        continue;
+                    }
+
+                    string[] items = post.Caption.Split('\n');
+                    int startIndex = 2;
+
+
+                    string name = null;
+
+                    if (items[2].IndexOf(CATEGORY_IDENTIFIER, StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        startIndex = 2;
+                        name = items[1].Trim();
+                    }
+                    else {
+                        startIndex = 1;
+                        name = items[0].Trim();
+                    }
+
+                    Dictionary<string, string> itemStore = new Dictionary<string, string>();
+
+                    for (int i = startIndex; i < items.Length; i++)
+                    {
+                        var identifier = items[i].Split(' ')[0].Trim();
+                        itemStore.Add(identifier.ToLower(), Regex.Replace(items[i], identifier, "").Trim());
+                    }
+
+                    var category = itemStore.ContainsKey(CATEGORY_IDENTIFIER) ? itemStore[CATEGORY_IDENTIFIER] : null;
+
+                    var size = itemStore.ContainsKey(SIZES_IDENTIFIER) ? itemStore[SIZES_IDENTIFIER] : null;
+
+                    if (string.IsNullOrEmpty(size)) {
+                        size = itemStore.ContainsKey(SIZE_IDENTIFIER) ? itemStore[SIZE_IDENTIFIER] : null;
+                    }
+
+                    var type = itemStore.ContainsKey(TYPE_IDENTIFIER) ? itemStore[TYPE_IDENTIFIER] : null;
+
+                    var color = itemStore.ContainsKey(COLOR_IDENTIFIER) ? itemStore[COLOR_IDENTIFIER] : null;
+
+                    var material = itemStore.ContainsKey(MATERIAL_IDENTIFIER) ? itemStore[MATERIAL_IDENTIFIER] : null;
+
+                    var department = itemStore.ContainsKey(DEPARTMENT_IDENTIFIER) ? itemStore[DEPARTMENT_IDENTIFIER] : null;
+
+                    if (string.IsNullOrEmpty(department)) {
+                        department = itemStore.ContainsKey(GENDER_IDENTIFIER) ? itemStore[GENDER_IDENTIFIER] : null;
+                    }
+
+                    department = department.Replace(" ", "");
+
+                    var departmentId = (int)Enum.Parse(typeof(ProductDepartment), department, true);
+
+                    var quantity = itemStore.ContainsKey(QUANTITY_IDENTIFIER) ? int.Parse(itemStore[QUANTITY_IDENTIFIER]) : 0;
+
+                    var priceValue = itemStore.ContainsKey(PRICE_IDENTIFIER) ? itemStore[PRICE_IDENTIFIER] : null;
+
+                    int spaceAfterPrice = priceValue.IndexOf(" ");
+
+                    double price = double.TryParse(priceValue.Substring(0, spaceAfterPrice), out price) ? price : 0;
+
+                    string imagePath = Path.GetFileName(new Uri(post.Media_Url).LocalPath);
+
+                    products.Add(new Product()
+                    {
+                        Price = price,
+                        Quantity = quantity,
+                        Size = size,
+                        CreatedDate = DateTime.Now,
+                        Code = post.Id,
+                        Material= material,
+                        DepartmentId = departmentId,
+                        Color = color,
+                        Category = category,
+                        Name = name,
+                        ImagePath = imagePath,
+                        InstagramRefId = post.Id,
+                        InstagramContentUrl = post.Media_Url
+                    });
+                }
+                catch {
                     continue;
                 }
-
-                int sizeIndex = post.Caption.IndexOf(SIZES_IDENTIFIER, 0, StringComparison.OrdinalIgnoreCase);
-                if (sizeIndex < 0)
-                {
-                    sizeIndex = post.Caption.IndexOf(SIZE_IDENTIFIER, 0, StringComparison.OrdinalIgnoreCase);
-                }
-
-                int priceIndex = post.Caption.IndexOf(PRICE_IDENTIFIER, sizeIndex < 0 ? 0 : sizeIndex, StringComparison.OrdinalIgnoreCase);
-
-                if (priceIndex < 0)
-                {
-                    continue;
-                }
-
-                string size = null;
-                if (sizeIndex >= 0)
-                {
-                    int spaceAfterSize = post.Caption.IndexOf(" ", sizeIndex);
-                    size = post.Caption.Substring(spaceAfterSize, priceIndex - spaceAfterSize);
-                }
-
-                int spaceAfterPrice = post.Caption.IndexOf(" ", priceIndex + PRICE_IDENTIFIER.Length + 1);
-
-                int priceLength = spaceAfterPrice > 0 ? spaceAfterPrice - priceIndex - PRICE_IDENTIFIER.Length : post.Caption.Length - priceIndex - PRICE_IDENTIFIER.Length;
-
-                double price = double.TryParse(post.Caption.Substring(priceIndex + PRICE_IDENTIFIER.Length, priceLength), out price) ? price : 0;
-                var name = post.Caption.Substring(0, sizeIndex < 0 ? priceIndex : sizeIndex);
-
-                var category = ProductCategory.Accessories;
-                if (name.IndexOf(MEN_IDENTIFIER, StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    category = ProductCategory.Men;
-                }
-                else if (name.IndexOf(WOMEN_IDENTIFIER, StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    category = ProductCategory.Women;
-                }
-
-                string imagePath = Path.GetFileName(new Uri(post.Media_Url).LocalPath);
-
-                products.Add(new Product()
-                {
-                    Price = price,
-                    Size = size,
-                    CreatedDate = DateTime.Now,
-                    Code = post.Id,
-                    Name = name,
-                    ImagePath = imagePath,
-                    InstagramRefId = post.Id,
-                    CategoryId = (int)category,
-                    InstagramContentUrl = post.Media_Url
-                });
             }
 
             return products;
