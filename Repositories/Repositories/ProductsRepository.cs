@@ -35,6 +35,16 @@ namespace TBStock.DAL.Repositories
             }
         }
 
+        public void AddProductsDetails(IEnumerable<ProductDetail> productsDetails)
+        {
+            using (var context = new TBStockDBContext())
+            {
+                context.ProductDetails.AddRange(productsDetails);
+
+                context.SaveChanges();
+            }
+        }
+
         public void DeleteAllProducts()
         {
             using (var context = new TBStockDBContext())

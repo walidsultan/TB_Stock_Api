@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web;
+using System.Web.DynamicData;
 using System.Web.Script.Serialization;
 
 namespace TB_Stock.Api.ApiHandler
@@ -12,7 +13,7 @@ namespace TB_Stock.Api.ApiHandler
     {
         private const string BASE_URL = "https://graph.instagram.com/";
         private const string MEDIA_URL = "me/media?fields={0}&limit={1}&access_token={2}";
-        private const string MEDIA_FIELDS = "id,caption,media_type,media_url";
+        private const string MEDIA_FIELDS = "id,caption,media_type,media_url,children{media_url}";
         private const string MEDIA_PAGE_SIZE = "25";
 
         private static readonly HttpClient _client = new HttpClient();
@@ -50,8 +51,20 @@ namespace TB_Stock.Api.ApiHandler
         public string Caption { get; set; }
         public string Media_Type { get; set; }
         public string Media_Url { get; set; }
+        public Children Children { get; set; }
     }
 
+
+    public class Children
+    {
+        public IEnumerable<InstagramChildPost> Data { get; set; }
+    }
+
+    public class InstagramChildPost
+    {
+        public string Id;
+        public string Media_Url;
+    }
     public class MediaResponse
     {
         public IEnumerable<InstagramPost> Data { get; set; }

@@ -10,6 +10,7 @@ namespace TBStock.DAL.Repositories
         void DeleteAllProducts();
         void DeleteAllProductsDetails();
         void AddProducts(IEnumerable<Product> products);
+        void AddProductsDetails(IEnumerable<ProductDetail> productsDetails);
 
     }
 }

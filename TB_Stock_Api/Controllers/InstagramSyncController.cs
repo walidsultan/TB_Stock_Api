@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -64,19 +65,21 @@ namespace TB_Stock.Api.Controllers
                     var posts = await _IInstagramGraphApi.GetInstagramPosts(accessToken);
 
                     //Convert instagram posts to TB products
-                    IEnumerable<Product> products = ConvertInstagramPostToProducts(posts);
+                    ProductsList productsList = ConvertInstagramPostToProducts(posts);
 
                     //Delete all existing data
                     _ProductsRepository.DeleteAllProducts();
+                    _ProductsRepository.DeleteAllProductsDetails();
 
                     //Add products to DB
-                    _ProductsRepository.AddProducts(products);
+                    _ProductsRepository.AddProducts(productsList.Products);
+                    _ProductsRepository.AddProductsDetails(productsList.ProductsDetails);
 
                     //Backup existing images
                     FTPHandler.BackupDirectory(IMAGES_FOLDER_NAME, ftpUsername, ftpPassword);
 
                     //Create images
-                    CreateNewImages(products, ftpUsername, ftpPassword);
+                    CreateNewImages(productsList, ftpUsername, ftpPassword);
 
                     return "Done";
                 }
@@ -92,7 +95,7 @@ namespace TB_Stock.Api.Controllers
 
         }
 
-        private void CreateNewImages(IEnumerable<Product> products, string ftpUsername, string ftpPassword)
+        private void CreateNewImages(ProductsList productsList, string ftpUsername, string ftpPassword)
         {
             //Create New Images Folder
             FTPHandler.CreateNewDirectory(IMAGES_FOLDER_NAME, ftpUsername, ftpPassword);
@@ -107,20 +110,38 @@ namespace TB_Stock.Api.Controllers
             string tempDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, TEMP_DOWNLOAD_FOLDER_NAME);
             using (var client = new WebClient())
             {
-                foreach (var product in products)
+                foreach (var product in productsList.Products)
                 {
                     if (!Directory.Exists(tempDirectory))
                     {
                         Directory.CreateDirectory(tempDirectory);
                     }
-                    string localFilePath = Path.Combine(tempDirectory, product.ImagePath);
-                    client.DownloadFile(product.InstagramContentUrl, localFilePath);
+
+                    var productDetails = productsList.ProductsDetails.Where(x => x.ProductId == product.Id);
 
                     var productFolderPath = IMAGES_FOLDER_NAME + "/" + product.DepartmentId.ToString() + "/" + product.Code;
                     FTPHandler.CreateNewDirectory(productFolderPath, ftpUsername, ftpPassword);
 
-                    string ftpFileName = productFolderPath + "/" + product.ImagePath;
-                    FTPHandler.UploadFile(ftpFileName, localFilePath, ftpUsername, ftpPassword);
+                    Dictionary<string,string> imagePaths = new Dictionary<string, string>();
+                    if (productDetails.Count() > 0)
+                    {
+                        foreach (var productDetail in productDetails) {
+                            imagePaths.Add(productDetail.ImagePath, productDetail.InstagramContentUrl);
+                        }
+                    }
+                    else
+                    {
+                        imagePaths.Add(product.ImagePath,product.InstagramContentUrl);
+                    }
+
+                    foreach (var kvp in imagePaths)
+                    {
+                        string localFilePath = Path.Combine(tempDirectory, kvp.Key);
+                        client.DownloadFile(kvp.Value, localFilePath);
+
+                        string ftpFileName = productFolderPath + "/" + kvp.Key;
+                        FTPHandler.UploadFile(ftpFileName, localFilePath, ftpUsername, ftpPassword);
+                    }
                 }
             }
 
@@ -128,10 +149,12 @@ namespace TB_Stock.Api.Controllers
             Directory.Delete(tempDirectory, true);
         }
 
-        private IEnumerable<Product> ConvertInstagramPostToProducts(IEnumerable<InstagramPost> posts)
+        private ProductsList ConvertInstagramPostToProducts(IEnumerable<InstagramPost> posts)
         {
-            List<Product> products = new List<Product>();
-
+            ProductsList productList = new ProductsList();
+            productList.Products = new List<Product>();
+            productList.ProductsDetails = new List<ProductDetail>();
+            int productId = 1;
             foreach (var post in posts)
             {
                 try
@@ -152,7 +175,8 @@ namespace TB_Stock.Api.Controllers
                         startIndex = 2;
                         name = items[1].Trim();
                     }
-                    else {
+                    else
+                    {
                         startIndex = 1;
                         name = items[0].Trim();
                     }
@@ -169,7 +193,8 @@ namespace TB_Stock.Api.Controllers
 
                     var size = itemStore.ContainsKey(SIZES_IDENTIFIER) ? itemStore[SIZES_IDENTIFIER] : null;
 
-                    if (string.IsNullOrEmpty(size)) {
+                    if (string.IsNullOrEmpty(size))
+                    {
                         size = itemStore.ContainsKey(SIZE_IDENTIFIER) ? itemStore[SIZE_IDENTIFIER] : null;
                     }
 
@@ -181,7 +206,8 @@ namespace TB_Stock.Api.Controllers
 
                     var department = itemStore.ContainsKey(DEPARTMENT_IDENTIFIER) ? itemStore[DEPARTMENT_IDENTIFIER] : null;
 
-                    if (string.IsNullOrEmpty(department)) {
+                    if (string.IsNullOrEmpty(department))
+                    {
                         department = itemStore.ContainsKey(GENDER_IDENTIFIER) ? itemStore[GENDER_IDENTIFIER] : null;
                     }
 
@@ -199,29 +225,52 @@ namespace TB_Stock.Api.Controllers
 
                     string imagePath = Path.GetFileName(new Uri(post.Media_Url).LocalPath);
 
-                    products.Add(new Product()
+                    var product = new Product()
                     {
                         Price = price,
                         Quantity = quantity,
                         Size = size,
                         CreatedDate = DateTime.Now,
                         Code = post.Id,
-                        Material= material,
+                        Material = material,
                         DepartmentId = departmentId,
                         Color = color,
                         Category = category,
                         Name = name,
                         ImagePath = imagePath,
                         InstagramRefId = post.Id,
-                        InstagramContentUrl = post.Media_Url
-                    });
+                        InstagramContentUrl = post.Media_Url,
+                        Id = productId
+                    };
+                    productList.Products.Add(product);
+
+
+                    //Add product details
+                    if (post.Children != null)
+                    {
+                        foreach (var childPost in post.Children.Data)
+                        {
+                            string childImagePath = Path.GetFileName(new Uri(childPost.Media_Url).LocalPath);
+
+                            productList.ProductsDetails.Add(new ProductDetail()
+                            {
+                                ImagePath = childImagePath,
+                                InstagramContentUrl = childPost.Media_Url,
+                                InstagramRefId = childPost.Id,
+                                ProductId = product.Id
+                            });
+                        }
+                    }
+
+                    productId++;
                 }
-                catch {
+                catch
+                {
                     continue;
                 }
             }
 
-            return products;
+            return productList;
         }
     }
 }

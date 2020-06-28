@@ -9,7 +9,8 @@ namespace TB_Stock.DAL.Models
         public int Id { get; set; }
         public int ProductId { get; set; }
         public string ImagePath { get; set; }
-
+        public string InstagramRefId { get; set; }
+        public string InstagramContentUrl { get; set; }
         public static void SetEntityConfiguration(DbModelBuilder modelBuilder)
         {
             EntityTypeConfiguration<ProductDetail> profileConfig = modelBuilder.Entity<ProductDetail>();
@@ -34,6 +35,15 @@ namespace TB_Stock.DAL.Models
                .HasColumnName("ImagePath")
                .HasColumnType("nvarchar");
 
+            profileConfig
+               .Property(t => t.InstagramRefId)
+               .HasColumnName("InstagramRefId")
+               .HasColumnType("nvarchar");
+
+            profileConfig
+               .Property(t => t.InstagramContentUrl)
+               .HasColumnName("InstagramContentUrl")
+               .HasColumnType("nvarchar");
             #endregion
 
             // Set Primary key

@@ -54,6 +54,7 @@
     <Compile Include="Models\ProductDepartment.cs" />
     <Compile Include="Models\ProductDetail.cs" />
     <Compile Include="Models\Product.cs" />
+    <Compile Include="Models\ProductsList.cs" />
     <Compile Include="Repositories\IProductsRepository.cs" />
     <Compile Include="Repositories\ProductsRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
