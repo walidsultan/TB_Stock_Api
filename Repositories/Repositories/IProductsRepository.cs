@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using TB_Stock.DAL.Models;
+using TBStock.DAL.Models;
 
 namespace TBStock.DAL.Repositories
 {
@@ -11,6 +12,6 @@ namespace TBStock.DAL.Repositories
         void DeleteAllProductsDetails();
         void AddProducts(IEnumerable<Product> products);
         void AddProductsDetails(IEnumerable<ProductDetail> productsDetails);
-
+        IEnumerable<Product> GetProductsByCategory(string category, ProductDepartment department, int skip, int take);
     }
 }

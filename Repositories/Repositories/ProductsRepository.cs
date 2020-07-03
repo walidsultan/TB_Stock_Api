@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TB_Stock.DAL.Models;
+using TBStock.DAL.Models;
 
 namespace TBStock.DAL.Repositories
 {
@@ -42,6 +43,30 @@ namespace TBStock.DAL.Repositories
                 context.ProductDetails.AddRange(productsDetails);
 
                 context.SaveChanges();
+            }
+        }
+
+        public Product GetProductByProductId(int productId)
+        {
+            using (var context = new TBStockDBContext())
+            {
+                return context.Products.FirstOrDefault(x => x.Id == productId);
+            }
+        }
+
+        public IEnumerable<Product> GetRandomProducts(int count)
+        {
+            using (var context = new TBStockDBContext())
+            {
+                return context.Products.OrderBy(x => Guid.NewGuid()).Take(count).ToList();
+            }
+        }
+
+        public IEnumerable<Product> GetProductsByCategory(string category, ProductDepartment department, int skip, int take)
+        {
+            using (var context = new TBStockDBContext())
+            {
+                return context.Products.Where(x => x.Category == category && x.DepartmentId==(int)department).OrderBy(x=>x.Id).Skip(skip).Take(take).ToList();
             }
         }
 

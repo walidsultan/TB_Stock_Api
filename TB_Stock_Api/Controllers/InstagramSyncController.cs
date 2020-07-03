@@ -43,6 +43,8 @@ namespace TB_Stock.Api.Controllers
         private const string TYPE_IDENTIFIER = "type";
         private const string MATERIAL_IDENTIFIER = "material";
         private const string GENDER_IDENTIFIER = "gender";
+        private const string BRAND_IDENTIFIER = "brand";
+        private const string BRANDS_IDENTIFIER = "brands";
 
         public InstagramSyncController(IInstagramGraphApi instagramGraphApi, IProductsRepository productsRepository)
         {
@@ -75,11 +77,11 @@ namespace TB_Stock.Api.Controllers
                     _ProductsRepository.AddProducts(productsList.Products);
                     _ProductsRepository.AddProductsDetails(productsList.ProductsDetails);
 
-                    //Backup existing images
-                    FTPHandler.BackupDirectory(IMAGES_FOLDER_NAME, ftpUsername, ftpPassword);
+                    ////Backup existing images
+                    //FTPHandler.BackupDirectory(IMAGES_FOLDER_NAME, ftpUsername, ftpPassword);
 
-                    //Create images
-                    CreateNewImages(productsList, ftpUsername, ftpPassword);
+                    ////Create images
+                    //CreateNewImages(productsList, ftpUsername, ftpPassword);
 
                     return "Done";
                 }
@@ -168,25 +170,27 @@ namespace TB_Stock.Api.Controllers
                     int startIndex = 2;
 
 
-                    string name = null;
-
                     if (items[2].IndexOf(CATEGORY_IDENTIFIER, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        startIndex = 2;
-                        name = items[1].Trim();
+                        startIndex = 1;
                     }
                     else
                     {
-                        startIndex = 1;
-                        name = items[0].Trim();
+                        startIndex = 0;
                     }
 
                     Dictionary<string, string> itemStore = new Dictionary<string, string>();
 
                     for (int i = startIndex; i < items.Length; i++)
                     {
-                        var identifier = items[i].Split(' ')[0].Trim();
+                        var identifier = items[i].Replace(". ", "").Split(' ')[0].Trim();
                         itemStore.Add(identifier.ToLower(), Regex.Replace(items[i], identifier, "").Trim());
+                    }
+
+                    var name = itemStore.ContainsKey(BRAND_IDENTIFIER) ? itemStore[BRAND_IDENTIFIER] : null;
+
+                    if (string.IsNullOrEmpty(name)) {
+                        name = itemStore.ContainsKey(BRANDS_IDENTIFIER) ? itemStore[BRANDS_IDENTIFIER] : null;
                     }
 
                     var category = itemStore.ContainsKey(CATEGORY_IDENTIFIER) ? itemStore[CATEGORY_IDENTIFIER] : null;
