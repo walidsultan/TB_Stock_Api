@@ -118,6 +118,7 @@
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Controllers\EmailController.cs" />
     <Compile Include="Controllers\InstagramSyncController.cs" />
+    <Compile Include="Controllers\CatgeoriesController.cs" />
     <Compile Include="Controllers\ProductsController.cs" />
     <Compile Include="FTP\FTPHandler.cs" />
     <Compile Include="Global.asax.cs">

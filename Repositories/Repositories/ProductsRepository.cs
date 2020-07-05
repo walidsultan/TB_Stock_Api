@@ -26,6 +26,16 @@ namespace TBStock.DAL.Repositories
             }
         }
 
+        public IEnumerable<DepartmentCategory> GetUniqueCategories()
+        {
+            using (var context = new TBStockDBContext())
+            {
+                return context.Products.GroupBy(x => new DepartmentCategory() { DepartmentId = x.DepartmentId, Category = x.Category }).Select(x => new DepartmentCategory() { DepartmentId = x.Key.DepartmentId, Category = x.Key.Category }).ToList();
+            }
+        }
+
+       
+
         public void AddProducts(IEnumerable<Product> products)
         {
             using (var context = new TBStockDBContext())
