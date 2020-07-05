@@ -13,7 +13,8 @@ namespace TBStock.DAL.Models
     {
         Men=1,
         Ladies,
-        Kids,
+        Boys,
+        Girls,
         Unisex,
         LadiesAccessories,
         MenAccessories

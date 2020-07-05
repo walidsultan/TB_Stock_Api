@@ -13,5 +13,7 @@ namespace TBStock.DAL.Repositories
         void AddProducts(IEnumerable<Product> products);
         void AddProductsDetails(IEnumerable<ProductDetail> productsDetails);
         IEnumerable<Product> GetProductsByCategory(string category, ProductDepartment department, int skip, int take);
+        Product GetProductByCode(string code);
+        int GetProductsCount();
     }
 }

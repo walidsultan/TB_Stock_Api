@@ -22,27 +22,44 @@ namespace TB_Stock.Api.ApiHandler
         {
             List<InstagramPost> posts = new List<InstagramPost>();
 
-            string url = string.Concat(BASE_URL, string.Format(MEDIA_URL, MEDIA_FIELDS, 25, accessToken));
+            string url = string.Concat(BASE_URL, string.Format(MEDIA_URL, MEDIA_FIELDS, MEDIA_PAGE_SIZE, accessToken));
 
 
             string nextUrl = url;
 
             do
             {
-                var mediaJsonResponse = await _client.GetAsync(nextUrl);
-
-                var mediaResponse = await mediaJsonResponse.Content.ReadAsAsync<MediaResponse>();
-
-                posts.AddRange(mediaResponse.Data);
-
-                nextUrl = mediaResponse.Paging.Next;
-
+                nextUrl = await AddPosts(posts, nextUrl);
             } while (!string.IsNullOrEmpty(nextUrl));
 
 
             return posts;
         }
 
+        public async Task<Tuple<IEnumerable<InstagramPost>,string>> GetPagedInstagramPosts(string accessToken,string nextUrl)
+        {
+            List<InstagramPost> posts = new List<InstagramPost>();
+
+            if (string.IsNullOrEmpty(nextUrl)) { 
+                nextUrl = string.Concat(BASE_URL, string.Format(MEDIA_URL, MEDIA_FIELDS, MEDIA_PAGE_SIZE, accessToken));
+            }
+
+            nextUrl= await AddPosts(posts, nextUrl);
+
+            return new Tuple<IEnumerable<InstagramPost>, string>(posts, nextUrl);
+        }
+
+        private static async Task<string> AddPosts(List<InstagramPost> posts, string nextUrl)
+        {
+            var mediaJsonResponse = await _client.GetAsync(nextUrl);
+
+            var mediaResponse = await mediaJsonResponse.Content.ReadAsAsync<MediaResponse>();
+
+            posts.AddRange(mediaResponse.Data);
+
+            nextUrl = mediaResponse.Paging.Next;
+            return nextUrl;
+        }
     }
 
     public class InstagramPost

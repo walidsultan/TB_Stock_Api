@@ -25,7 +25,7 @@ namespace TB_Stock.Api.Controllers
         private const string IMAGES_FOLDER_NAME = "TBStock_Images";
         private const string TEMP_DOWNLOAD_FOLDER_NAME = "Temp";
 
-        private static bool Is_Instagram_Reload_Running = false;
+        private static bool Is_Instagram_Sync_Running = false;
 
         private IInstagramGraphApi _IInstagramGraphApi;
 
@@ -54,13 +54,13 @@ namespace TB_Stock.Api.Controllers
 
         [HttpPost]
         [Route("ReLoadAll")]
-        public async Task<string> ReLoadAll(string accessToken, string ftpUsername, string ftpPassword)
+        public async Task<string> ReLoadAll(string accessToken)
         {
             try
             {
-                if (!Is_Instagram_Reload_Running)
+                if (!Is_Instagram_Sync_Running)
                 {
-                    Is_Instagram_Reload_Running = true;
+                    Is_Instagram_Sync_Running = true;
 
 
                     //Get all instagram posts
@@ -92,7 +92,65 @@ namespace TB_Stock.Api.Controllers
             }
             finally
             {
-                Is_Instagram_Reload_Running = false;
+                Is_Instagram_Sync_Running = false;
+            }
+
+        }
+
+
+        [HttpPost]
+        [Route("AddNew")]
+        public async Task<string> AddNew(string accessToken)
+        {
+            try
+            {
+                if (!Is_Instagram_Sync_Running)
+                {
+                    Is_Instagram_Sync_Running = true;
+
+                    string nextUrl = null;
+                    bool areAllItemsNew;
+                    int productsCount = _ProductsRepository.GetProductsCount();
+                    do
+                    {
+                        var data = await _IInstagramGraphApi.GetPagedInstagramPosts(accessToken, nextUrl);
+
+                        var posts = data.Item1;
+                        nextUrl = data.Item2;
+
+                        List<InstagramPost> newPosts = new List<InstagramPost>();
+                        foreach (var post in posts)
+                        {
+                            var existingPost = _ProductsRepository.GetProductByCode(post.Id);
+                            if (existingPost == null)
+                            {
+                                newPosts.Add(post);
+                            }
+                        }
+
+                        if (newPosts.Count == 0) break;
+
+                        areAllItemsNew = newPosts.Count == posts.Count();
+
+                        var newProductsList = ConvertInstagramPostToProducts(newPosts, productsCount+1);
+
+                        _ProductsRepository.AddProducts(newProductsList.Products);
+                        _ProductsRepository.AddProductsDetails(newProductsList.ProductsDetails);
+
+                        productsCount += newPosts.Count;
+                    }
+                    while (areAllItemsNew);
+
+                    return "Done";
+                }
+                else
+                {
+                    return "Already_Running";
+                }
+            }
+            finally
+            {
+                Is_Instagram_Sync_Running = false;
             }
 
         }
@@ -151,12 +209,12 @@ namespace TB_Stock.Api.Controllers
             Directory.Delete(tempDirectory, true);
         }
 
-        private ProductsList ConvertInstagramPostToProducts(IEnumerable<InstagramPost> posts)
+        private ProductsList ConvertInstagramPostToProducts(IEnumerable<InstagramPost> posts,int nextProductId=1)
         {
             ProductsList productList = new ProductsList();
             productList.Products = new List<Product>();
             productList.ProductsDetails = new List<ProductDetail>();
-            int productId = 1;
+            int productId = nextProductId;
             foreach (var post in posts)
             {
                 try

@@ -36,6 +36,14 @@ namespace TBStock.DAL.Repositories
             }
         }
 
+        public int GetProductsCount()
+        {
+            using (var context = new TBStockDBContext())
+            {
+                return context.Products.Count();
+            }
+        }
+
         public void AddProductsDetails(IEnumerable<ProductDetail> productsDetails)
         {
             using (var context = new TBStockDBContext())
@@ -51,6 +59,14 @@ namespace TBStock.DAL.Repositories
             using (var context = new TBStockDBContext())
             {
                 return context.Products.FirstOrDefault(x => x.Id == productId);
+            }
+        }
+
+        public Product GetProductByCode(string code)
+        {
+            using (var context = new TBStockDBContext())
+            {
+                return context.Products.FirstOrDefault(x => x.Code == code);
             }
         }
 
