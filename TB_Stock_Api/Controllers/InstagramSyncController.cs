@@ -110,7 +110,7 @@ namespace TB_Stock.Api.Controllers
 
                     string nextUrl = null;
                     bool areAllItemsNew;
-                    int productsCount = _ProductsRepository.GetProductsCount();
+                    int productsCount = _ProductsRepository.GetTopProductId();
                     do
                     {
                         var data = await _IInstagramGraphApi.GetPagedInstagramPosts(accessToken, nextUrl);

@@ -15,5 +15,6 @@ namespace TBStock.DAL.Repositories
         IEnumerable<Product> GetProductsByCategory(string category, ProductDepartment department, int skip, int take);
         Product GetProductByCode(string code);
         int GetProductsCount();
+        int GetTopProductId();
     }
 }

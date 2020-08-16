@@ -54,6 +54,14 @@ namespace TBStock.DAL.Repositories
             }
         }
 
+        public int GetTopProductId()
+        {
+            using (var context = new TBStockDBContext())
+            {
+                return context.Products.OrderByDescending(x=>x.Id).FirstOrDefault().Id;
+            }
+        }
+
         public void AddProductsDetails(IEnumerable<ProductDetail> productsDetails)
         {
             using (var context = new TBStockDBContext())
@@ -92,7 +100,7 @@ namespace TBStock.DAL.Repositories
         {
             using (var context = new TBStockDBContext())
             {
-                return context.Products.Where(x => x.Category == category && x.DepartmentId==(int)department).OrderBy(x=>x.Id).Skip(skip).Take(take).ToList();
+                return context.Products.Where(x => x.Category == category && x.DepartmentId==(int)department).OrderByDescending(x=>x.Id).Skip(skip).Take(take).ToList();
             }
         }
 
